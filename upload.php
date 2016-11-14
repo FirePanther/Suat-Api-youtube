@@ -22,16 +22,18 @@ foreach ($s as $f) {
  * upload the file to gdrive
  */
 function upload($f) {
-	$json = @file_get_contents($f.'.json');
-	$arr = @json_decode($json, 1);
-	$title = $arr['title'];
-	$channel = $arr['channel'];
-	$id = $arr['id'];
-	$thumb = $arr['thumb'];
+	if (preg_match('~\s(.*)\.mp4$~', $f, $m)) {
+		$json = @file_get_contents('dl/'.$m[1].'.json');
+		$arr = @json_decode($json, 1);
+		$title = $arr['title'];
+		$channel = $arr['channel'];
+		$id = $arr['id'];
+		$thumb = $arr['thumb'];
+	} else $json = 0;
 	
-	@unlink('errorlog.log');
+	@unlink('error.log');
 	// upload the file to a given parent (folder "YouTube")
-	exec('/home/firepanther/fp/gdrive -c '.__DIR__.'/../.gdrive upload --no-progress --delete "'.$f.'" -p 0B2F-aT17EcS2RXh5a011TzU2cVk 2> errorlog.log');
+	exec('/home/firepanther/fp/gdrive -c '.__DIR__.'/../.gdrive upload --no-progress --delete "'.$f.'" -p 0B2F-aT17EcS2RXh5a011TzU2cVk 2> error.log');
 	$src = @file_get_contents('errorlogs.log');
 	if ($src) {
 		// send errors via telegram
@@ -40,7 +42,7 @@ function upload($f) {
 		));
 	} else {
 		// send success via telegram (with youtube video thumbnail and link)
-		@unlink('errorlogs.log');
+		@unlink('error.log');
 		file_get_contents('https://api.telegram.org/bot'.file_get_contents('/home/firepanther/telegram').'/sendMessage?chat_id=33357188&parse_mode=Markdown&text='.urlencode(
 			"🎬 *Neues Video*".($thumb ? "[:]($thumb)" : ':')." [$title](http://youtu.be/$id) (von *$channel*)"
 		));

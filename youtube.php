@@ -54,10 +54,10 @@ else $dir = '/home/firepanther/Dropbox/YouTube';
 
 // filename (+ path), escaped
 $filename = $dir.'/'.cleanName($author).' • '.cleanName($title).' • '.cleanName($my_id).'.mp4';
-$filename = preg_replace_callback('~[^\w\s/!-.]+~', function($m) {
+$filenameEscaped = preg_replace_callback('~[^\w\s/!-.]+~', function($m) {
 	return '\\x'.implode('\\x', str_split(bin2hex($m[0]), 2));
 }, $filename);
-$filename = escapeshellarg($filename);
+$filenameEscaped = escapeshellarg($filenameEscaped);
 
 // download video into target folder
 $shell = './youtube-dl --mark-watched '.($debug ? '--verbose' : '-q').' --no-call-home --recode-video mp4 --embed-subs '.
@@ -65,7 +65,7 @@ $shell = './youtube-dl --mark-watched '.($debug ? '--verbose' : '-q').' --no-cal
 	'--embed-thumbnail --add-metadata -o '.
 		'"'.__dir__.'/tmp/dl-'.$my_id.'.%(ext)s" '.
 	'--exec "'.
-		'mv {} \"\$(/bin/echo -e \"'.str_replace("'", '', $filename).'\")\"'. // rename file
+		'mv {} \"\$(/bin/echo -e \"'.str_replace("'", '', $filenameEscaped).'\")\"'. // rename file
 		' && php -f '.__DIR__.'/upload.php '.$my_id. // upload (just this file) to gdrive
 	'" "http://youtu.be/'.$my_id.'"'.($debug ? ' &>&1' : ' > /dev/null 2> dl-errors.log &');
 $exec2 = exec($shell, $exec);
@@ -75,18 +75,19 @@ if ($debug) {
 	echo $shell."\n\n";
 	print_r($exec);
 	print_r($exec2);
+	echo $filename.' - '.$filenameEscaped;
 	die(PHP_EOL.'finished');
 }
 
 // save info for the upload script (currently just for the telegram info)
-file_put_contents($filename.'.json', json_encode([
+file_put_contents("$dir/$my_id.json", json_encode([
 	'title' => $title,
 	'channel' => $author,
 	'id' => $my_id,
 	'thumb' => $thumbnail_url
 ]));
 
-// save a tmp file to prevend a second download
+// save a tmp file to prevent a second download
 file_put_contents($tmpfile, '');
 
 // if everything is successful, print success for google apps script
