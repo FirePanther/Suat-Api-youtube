@@ -1,4 +1,10 @@
 <?php
+/**
+ * @author           Suat Secmen (http://suat.be)
+ * @copyright        2015 - 2016 Suat Secmen
+ * @license          GNU General Public License
+ */
+
 // if some files couldn't get uploaded (because gdrive is full), retry the upload
 header('content-type: text/plain');
 
